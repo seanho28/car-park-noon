@@ -1,0 +1,6 @@
+{
+  "name": "LotRadar SG — Real-Time Carpark Availability",
+  "description": "Singapore carpark lot availability tracker with live HDB Data.gov.sg integration, distance sorting, ERP/rate estimates, and interactive spatial radar.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
