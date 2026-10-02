@@ -1,5 +1,5 @@
-import React from 'react';
-import { CheckCircle2, Clock, RefreshCw, ShieldAlert } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { CheckCircle2, Clock, RefreshCw, ShieldAlert, Activity } from 'lucide-react';
 import { getConfiguredAdaptersStatus } from '../config/apiConfig';
 
 interface ApiStatusModalProps {
@@ -13,6 +13,13 @@ interface ApiStatusModalProps {
   isRefreshing: boolean;
 }
 
+interface HealthCheckPayload {
+  status: string;
+  service: string;
+  timestamp: string;
+  uptimeSeconds: number;
+}
+
 export const ApiStatusModal: React.FC<ApiStatusModalProps> = ({
   isOpen,
   onClose,
@@ -23,6 +30,25 @@ export const ApiStatusModal: React.FC<ApiStatusModalProps> = ({
   onManualRefresh,
   isRefreshing,
 }) => {
+  const [healthData, setHealthData] = useState<HealthCheckPayload | null>(null);
+  const [healthError, setHealthError] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    fetch('/api/health')
+      .then((res) => {
+        if (!res.ok) throw new Error('Health check failed');
+        return res.json();
+      })
+      .then((data: HealthCheckPayload) => {
+        setHealthData(data);
+        setHealthError(false);
+      })
+      .catch(() => {
+        setHealthError(true);
+      });
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const { ltaDataMall: hasLtaKey, uraSpace: hasUraKey } =
@@ -56,6 +82,33 @@ export const ApiStatusModal: React.FC<ApiStatusModalProps> = ({
         </div>
 
         <div className="space-y-3">
+          {/* 0. Backend /api/health Endpoint Status */}
+          <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/60 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2.5">
+              <Activity className="w-4 h-4 text-emerald-600 shrink-0" />
+              <div>
+                <span className="text-xs font-semibold text-slate-900 block">
+                  Health Check Endpoint (<code>GET /api/health</code>)
+                </span>
+                <span className="text-[11px] font-mono text-slate-500 tabular-nums">
+                  {healthError
+                    ? 'Endpoint unreachable'
+                    : healthData
+                    ? `status: "${healthData.status}" · uptime: ${healthData.uptimeSeconds}s`
+                    : 'Checking /api/health...'}
+                </span>
+              </div>
+            </div>
+            <a
+              href="/api/health"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-mono font-medium text-emerald-700 hover:underline whitespace-nowrap"
+            >
+              Open JSON
+            </a>
+          </div>
+
           {/* 1. Data.gov.sg HDB Feed */}
           <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/60 flex items-start justify-between gap-4">
             <div className="space-y-1">
